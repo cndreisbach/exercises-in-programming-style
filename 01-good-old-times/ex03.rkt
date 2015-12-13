@@ -1,5 +1,8 @@
 #lang racket
 
+;; In exercise 3, I used all my memory, but it did not seem to speed up my program much.
+
+
 ;; Overall strategy: (PART 1) read the input file, count the 
 ;; words, increment/store counts in secondary memory (a file) 
 ;; (PART 2) find the 25 most frequent words in secondary memory
@@ -33,19 +36,36 @@
 (set-data! 5 "")    ; data[5] is the word
 (set-data! 6 "")    ; data[6] is word,NNNN
 (set-data! 7 "")    ; data[7] is frequency
+(set-data! 8 1024)  ; data[8] is the index of the current line
 
 (define word-freqs-out (open-output-file "/tmp/wordfreqs" #:exists 'truncate))
 (define word-freqs-in (open-input-file "/tmp/wordfreqs"))
 
 (define input (open-input-file "pnp-2000.txt"))
-(set-data! 1 (read-line input 'any))
+;(define input (open-input-file "sampletext.txt"))
 
 (let loop ()
-  (when (not (eof-object? (data 1)))
-    (set-data! 1 (string-append (data 1) "\n"))
+  (when (= (data 8) 1024)
+    (set-data! 8 9)
+    (for [(i (range 9 1024))]
+      (set-data! i '()))
+    (set-data! 1 (read-line input 'any))
+    (let load-data ()
+      (when (and (not (eof-object? (data 1)))
+                 (< (data 8) 1024))
+        (set-data! 1 (string-append (data 1) "\n"))
+        (set-data! (data 8) (data 1))
+        (set-data! 8 (add1 (data 8)))
+        (set-data! 1 (read-line input 'any))
+        (load-data)))
+    (set-data! 8 9))
+  
+  (when (and (< (data 8) 1024)
+             (not (empty? (data (data 8)))))
+    ;(set-data! 1 (data (data 8)))
     (set-data! 2 '())
     (set-data! 3 0)
-    (for ([c (data 1)])
+    (for ([c (data (data 8))])
       (cond
         [(empty? (data 2))
          (when (is-alnum? c)
@@ -55,7 +75,7 @@
          (when (not (is-alnum? c))
            ; We found the end of a word.
            (set-data! 4 #f)
-           (set-data! 5 (string-downcase (substring (data 1) (data 2) (data 3))))
+           (set-data! 5 (string-downcase (substring (data (data 8)) (data 2) (data 3))))
            (when (and (>= (string-length (data 5)) 2)
                       (not (member (data 5) (data 0))))
              (set-data! 6 (read-line word-freqs-in))
@@ -87,7 +107,7 @@
              (file-position word-freqs-in 0))
            (set-data! 2 '()))])
       (set-data! 3 (add1 (data 3))))
-    (set-data! 1 (read-line input 'any))
+    (set-data! 8 (add1 (data 8)))
     (loop)))
 (close-input-port input)
 (close-output-port word-freqs-out)
