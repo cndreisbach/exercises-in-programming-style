@@ -5,14 +5,15 @@
 ;; Tail-recursive functions
 
 (define (count-words words stopwords)
-  (define (-count-words words stopwords freqs)
+  (let -count-words ([words words]
+                     [stopwords stopwords]
+                     [freqs (make-hash)])
     (cond
       [(empty? words) freqs]
       [else
        (when (not (member (first words) stopwords))
          (hash-update! freqs (first words) add1 0))
-       (-count-words (rest words) stopwords freqs)]))
-  (-count-words words stopwords (make-hash)))
+       (-count-words (rest words) stopwords freqs)])))
 
 (define (print-word-freqs freqlist)
   (when (not (empty? freqlist))
@@ -43,11 +44,11 @@
       '()
       (cons (filter-char (first chars)) (filter-and-normalize (rest chars)))))  
 
-(define (min-take xs c)
+(define (take-max xs c)
   (cond
     [(empty? xs) '()]
     [(= c 0) '()]
-    [else (cons (first xs) (min-take (rest xs) (sub1 c)))]))
+    [else (cons (first xs) (take-max (rest xs) (sub1 c)))]))
 
 ;; Non-recursive functions
 
@@ -72,7 +73,7 @@
       (vector-ref (current-command-line-arguments) 0)))
 
 (print-word-freqs
- (min-take
+ (take-max
   (sort-frequencies
    (count-words
     (scan
