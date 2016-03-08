@@ -17,6 +17,10 @@
   (or (char-alphabetic? c)
       (char-numeric? c)))
 
+(define (min-take xs c)
+  (take xs (min c (length xs))))
+
 (provide string-prefix?
          get-stop-words
-         char-alnum?)
+         char-alnum?
+         min-take)
